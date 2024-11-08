@@ -1,0 +1,268 @@
+---
+title: "HW 4"
+author: "Trey Davidson"
+date: "2024-09-19"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 6
+
+A.) Approx 0.3775
+
+B.) 50 hours 
+
+# Problem 9 
+
+A.) 37/137
+
+B.) 0.19 
+
+
+# Problem 13
+
+
+A.) 
+```{r }
+
+library(ISLR2)
+
+attach(Weekly)
+
+boxplot(Today ~ Direction, 
+        xlab = "Direction", ylab = "Today", 
+        main = "Boxplot of Today by Direction")
+
+#This plot tells us that if today is extermly postive or extermly neagtive then the weekly will direction will likely pull in the direction. The usefulness of this is questioanble though as if the market goes down by 10% on Monday, then it will be very unlikely that it will be up 11.1111% required to be up by Friday so the usefulness of this predicatior is uknown. 
+```
+
+B.) 
+```{r }
+
+model <- glm(Direction ~ Today + Lag1 + Lag2 + Volume, data = Weekly, family = binomial)
+summary(model)
+
+
+# None of these seem to be statistically significant
+```
+
+C.)
+```{r code}
+
+predicted_probs <- predict(model, type = "response")
+
+prob_assoicate_up <- 0.5
+
+# Creates a vector that will deterime if it meets the threshold to be up
+meets_prob_requirment <- (predicted_probs > prob_assoicate_up)
+
+
+# Converts True -> Up and False -> down
+predicted_direction <- ifelse(meets_prob_requirment, "Up", "Down")
+
+confusion_matrix <- table(Actual = Direction, Predicted = predicted_direction)
+
+confusion_matrix
+
+
+# The confusion matrix is indicating nothing to be about the types of mistakes as its apperantly gettting everything correct
+```
+
+D.)
+``` {r}
+
+### Model LOG
+# Filter data for 1990 to 2008
+Weekly1990_2008 <- Weekly[Weekly$Year >= 1990 & Weekly$Year <= 2008, ]
+
+# Filter data for 2009 to 2010
+Weekly2009_2010 <- Weekly[Weekly$Year >= 2009 & Weekly$Year <= 2010, ]
+
+# Create logistic regression model
+model_2 <- glm(Direction ~ Lag2, data = Weekly1990_2008, family = binomial)
+
+# Predict results of model 2
+predicted_probs <- predict(model_2, newdata = Weekly2009_2010, type = "response")
+
+# Classify predictions based on threshold
+
+threshold_model_2 <- 0.5
+predicted_direction <- ifelse(predicted_probs > threshold_model_2, "Up", "Down")
+
+# Create confusion matrix using the actual values from the Weekly2009_2010 dataset
+confusion_matrix <- table(Actual = Weekly2009_2010$Direction, Predicted = predicted_direction)
+
+# Print the confusion matrix
+confusion_matrix
+
+
+### Model LDA
+
+# Load the MASS package
+library(MASS)
+
+# Create the LDA model
+LDA_model <- lda(Direction ~ Lag2, data = Weekly1990_2008)
+
+# Make predictions (class labels)
+predicted_probs <- predict(LDA_model, newdata = Weekly2009_2010)
+
+# Get predicted class labels
+predicted_direction_LDA <- predicted_probs$class
+
+# Create the confusion matrix using the actual values from the Weekly2009_2010 dataset
+confusion_matrix_LDA <- table(Actual = Weekly2009_2010$Direction, Predicted = predicted_direction_LDA)
+
+# Print the confusion matrix
+confusion_matrix_LDA
+
+### Model QDA
+
+# Create the QDA model
+QDA_model <- qda(Direction ~ Lag2, data = Weekly1990_2008)
+
+# Make predictions (class labels)
+predicted_probs <- predict(QDA_model, newdata = Weekly2009_2010)
+
+# Get predicted class labels
+predicted_direction_QDA <- predicted_probs$class
+
+# Create the confusion matrix using the actual values from the Weekly2009_2010 dataset
+confusion_matrix_QDA <- table(Actual = Weekly2009_2010$Direction, Predicted = predicted_direction_QDA)
+
+# Print the confusion matrix
+confusion_matrix_QDA
+
+
+### Model KNN with k = 1
+# Load the class package
+library(class)
+
+# Prepare the training and test data
+train_data <- Weekly1990_2008
+test_data <- Weekly2009_2010
+
+# Separate predictors and response for training
+train_x <- as.matrix(train_data[, "Lag2"])  # Convert to matrix
+train_y <- train_data$Direction
+
+# Separate predictors for testing
+test_x <- as.matrix(test_data[, "Lag2"])  # Convert to matrix
+
+# Perform k-NN with k = 1
+predicted_direction_KNN <- knn(train = train_x, test = test_x, cl = train_y, k = 1)
+
+# Create the confusion matrix
+confusion_matrix_KNN <- table(Actual = test_data$Direction, Predicted = predicted_direction_KNN)
+
+# Print the confusion matrix
+confusion_matrix_KNN
+
+### Naive Bayes
+
+library(e1071)
+
+# Prepare the training and test data
+train_data <- Weekly1990_2008
+test_data <- Weekly2009_2010
+
+# Fit the Naive Bayes model
+naive_bayes_model <- naiveBayes(Direction ~ Lag2, data = train_data)
+
+# Make predictions on the test data
+predicted_direction_Bayes <- predict(naive_bayes_model, newdata = test_data)
+
+# Create the confusion matrix
+confusion_matrix_Bayes <- table(Actual = test_data$Direction, Predicted = predicted_direction_Bayes)
+
+# Print the confusion matrix
+confusion_matrix_Bayes
+
+```
+
+i.)  The model that did best by using the confusion table is LDA.
+
+J. 
+``` {r }
+# Prepare the training and test data
+train_data <- Weekly1990_2008
+test_data <- Weekly2009_2010
+
+# Separate predictors and response for training
+train_x <- as.matrix(train_data[, c("Today")])  # Include Lag1, Lag2, and Lag3
+train_y <- train_data$Direction
+
+# Separate predictors for testing
+test_x <- as.matrix(test_data[, c("Today")])  # Include Lag1, Lag2, and Lag3
+
+# Perform k-NN with k = 27
+predicted_direction_KNN <- knn(train = train_x, test = test_x, cl = train_y, k = 20)
+
+# Create the confusion matrix
+confusion_matrix_KNN <- table(Actual = test_data$Direction, Predicted = predicted_direction_KNN)
+
+# Print the confusion matrix
+print(confusion_matrix_KNN)
+
+
+
+```
+
+Out of everything i did the one above performed the best. 
+
+### Problem 15
+
+```{r}
+
+### A
+Power <- function()
+{
+  print(2 ^ 3)
+}
+
+Power 
+
+
+
+### B. 
+Power2 <- function(x, a)
+{
+  print(x ^ a)
+}
+
+
+Power2(3, 8)
+
+
+# 3^8
+Power2(10, 3)
+
+Power2(8, 17)
+
+Power2(131, 3)
+
+
+
+Power3 <- function(x, a)
+{
+  return(x^a)
+}
+
+x <- seq(1, 10, by = 1)
+
+plot(x, Power3(x, 2),
+     xlab = "x", ylab = "x^2",
+     log = "y")
+
+PlotPower <- function(range, a)
+{
+  x <- range
+  plot(x, Power3(x, 2),
+       xlab = "x", ylab = "x^2",
+       log = "y")
+  
+}
+```

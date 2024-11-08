@@ -1,0 +1,225 @@
+---
+title: "HW9"
+author: "Trey Davidson"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR2)
+library(caret)
+library(e1071)
+
+set.seed(10)
+
+
+
+getTrainTestIndex <- function(amount) 
+{
+  total_numbers <- amount / 2
+  
+  half <- amount/2
+  
+  all_indices <- sample(1:amount, size = amount, replace = FALSE)
+  
+  train_index <- all_indices[1:half]
+  test_index <- all_indices[half:amount]
+  
+  return(list(train_index = train_index, test_index = test_index))
+}
+
+
+```
+
+# Question 1
+
+![HW9 PDF](/Users/treydavidson/Desktop/Mizzou/FS 2024/STATS 4510/HW/HW9/HW9.pdf)
+
+
+# Question 7 
+
+```{r }
+###################
+
+
+# A.) 
+carData <- Auto
+
+n <- nrow(carData)
+
+carData$MileageDistance <- ifelse(carData$mpg > median(carData$mpg), 1, 0)
+
+
+indexes <- getTrainTestIndex(n)
+
+traindata <- carData[indexes$train_index, ]
+testdata <- carData[indexes$test_index, ]
+
+traindata$MileageDistance <- as.factor(traindata$MileageDistance)
+testdata$MileageDistance <- as.factor(testdata$MileageDistance)
+
+
+# B.)
+lin_costs <- rep(0.0, 4)
+
+cost_values <- c(1, 10, 100, 1000)
+
+
+for (c in cost_values) 
+{
+  m1 <- svm(MileageDistance ~ . - mpg, kernel = "linear", cost = c, scale = FALSE, data = traindata)
+  
+  
+  predictions <- predict(m1, newdata = testdata)
+  
+  confusion_matrix <- confusionMatrix(predictions, testdata$MileageDistance)
+  
+  accuracy <- confusion_matrix$overall['Accuracy']
+  lin_costs[c] <- accuracy
+
+}
+
+which.max(lin_costs)
+
+
+
+
+```
+
+# Question 8 
+``` {r }
+
+# A.)
+data <- OJ
+
+datatrain <- data[1:800,]
+datatest <- data[800:nrow(data), ]
+
+
+# B.)
+m2 <- svm(datatrain$Purchase ~ ., data = datatrain, kernel = "linear", cost = 0.01)
+
+predictions <- predict(m2, newdata = datatest)
+
+confusion_matrix <- confusionMatrix(predictions, datatest$Purchase)
+
+
+accuracy_m2 <- confusion_matrix$overall['Accuracy']
+
+test_error_m2 <- 1 - accuracy_m2
+
+#C.) 
+test_error_m2
+
+# D.)
+m3 <- tune(svm, Purchase ~ ., data = datatrain, kernel = "linear", ranges = list(cost = c(0.01, 0.1, 1, 5, 10)))
+
+best_cost <- m3$best.parameters$cost
+
+m3f <- svm(Purchase ~ ., data = datatrain, kernel = "linear", cost = best_cost)
+
+predictions <- predict(m3f, newdata = datatest)
+
+confusion_matrix_m3f <- confusionMatrix(predictions, datatest$Purchase)
+
+accuracy_m3f <- confusion_matrix_m3f$overall['Accuracy']
+
+test_error_m3f <- 1 - accuracy_m3f
+
+test_error_m3f
+
+# Between tuned and untuend linnear. Tuned wins barley
+
+
+# F.)
+m4 <- svm(Purchase ~ ., data = datatrain, kernel = "radial", cost = 0.01)
+
+
+predictions_m4 <- predict(m4, newdata = datatest)
+
+
+confusion_matrix_m4 <- confusionMatrix(predictions_m4, datatest$Purchase)
+
+
+accuracy_m4 <- confusion_matrix_m4$overall['Accuracy']
+
+
+test_error_m4 <- 1 - accuracy_m4
+
+
+test_error_m4
+
+
+m5 <- tune(svm, Purchase ~ ., data = datatrain, kernel = "radial", 
+           ranges = list(cost = c(0.01, 0.1, 1, 5, 10)))
+
+
+best_cost_m5f <- m5$best.parameters$cost
+
+
+
+
+m5f <- svm(Purchase ~ ., data = datatrain, kernel = "radial", cost = best_cost_m5f)
+
+
+predictions_m5f <- predict(m5f, newdata = datatest)
+
+confusion_matrix_m5f <- confusionMatrix(predictions_m5f, datatest$Purchase)
+
+
+accuracy_m5f <- confusion_matrix_m5f$overall['Accuracy']
+
+test_error_m5f <- 1 - accuracy_m5f
+
+test_error_m5f
+
+
+# g.)
+
+m6 <- svm(Purchase ~ ., data = datatrain, kernel = "polynomial", cost = 0.01, degree = 2)
+
+
+predictions_m6 <- predict(m6, newdata = datatest)
+
+
+confusion_matrix_m6 <- confusionMatrix(predictions_m6, datatest$Purchase)
+
+
+accuracy_m6 <- confusion_matrix_m6$overall['Accuracy']
+
+
+test_error_m6 <- 1 - accuracy_m6
+
+test_error_m6 
+
+
+
+m7 <- tune(svm, Purchase ~ ., data = datatrain, kernel = "polynomial", 
+           ranges = list(cost = c(0.01, 0.1, 1, 5, 10), degree = 2))
+
+
+best_cost_m7f <- m7$best.parameters$cost
+
+
+
+m7f <- svm(Purchase ~ ., data = datatrain, kernel = "polynomial", cost = best_cost_m7f, degree = 2)
+
+
+predictions_m7f <- predict(m7f, newdata = datatest)
+
+
+confusion_matrix_m7f <- confusionMatrix(predictions_m7f, datatest$Purchase)
+
+
+accuracy_m7f <- confusion_matrix_m7f$overall['Accuracy']
+
+
+test_error_m7f <- 1 - accuracy_m7f
+
+test_error_m7f
+
+# The tuned model using degree 2 perfmoeed the best with an error rate of 18%. 
+```

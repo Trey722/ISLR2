@@ -1,0 +1,6 @@
+"0","importance <- summary(m1)
+
+# Print the importance
+print(importance)
+"
+"0",""

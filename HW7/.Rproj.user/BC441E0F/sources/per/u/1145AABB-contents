@@ -1,0 +1,42 @@
+
+library(ISLR2)
+
+
+set.seed(10)  
+train_index <- sample(length(Wage$year), length(Wage$year) / 2)
+
+train_data <- Wage[train_index, ]
+test_data <- Wage[-train_index, ]
+
+RSS <- numeric(10)
+for (num_cuts in 1:10)
+{
+  age_cut <- cut(Wage$age, breaks = num_cuts  + 1)
+  
+  model <- glm(wage ~ age_cut, data = Wage)
+  
+  predictions <- suppressWarnings(predict(model, newdata = test_data))
+  
+  RSS[num_cuts] <-  sum((test_data$wage - predictions) ^ 2)
+}
+
+
+
+optimal_cuts <- which.min(RSS)
+
+
+model <- glm(wage ~ cut(age, breaks = optimal_cuts + 1), data = train_data)
+
+
+test_data$age_cut <- cut(test_data$age, breaks = optimal_cuts + 1, include.lowest = TRUE)
+predictions <- predict(model, newdata = test_data)
+
+
+plot(test_data$age, test_data$wage, 
+     xlab = "Age", 
+     ylab = "Wage", 
+     main = "Wage vs. Age")
+
+
+lines(test_data$age[order(test_data$age)], 
+      predictions[order(test_data$age)])

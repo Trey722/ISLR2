@@ -1,0 +1,37 @@
+library(ISLR2)
+library(pls)
+
+
+set.seed(10)
+
+
+train_fraction <- 0.7
+train_indices <- sample(seq_len(nrow(College)), size = floor(train_fraction * nrow(College)))
+train_data <- College[train_indices, ]
+test_data <- College[-train_indices, ]
+
+
+pls_model <- plsr(Apps ~ ., data = train_data, scale=TRUE, validation = "CV")
+
+
+summary(pls_model)
+
+
+plot(pls_model, plottype = "validation")
+
+
+optimal_ncomp <- which.min(pls_model$validation$PRESS)
+
+
+predictions <- predict(pls_model, newdata = test_data, ncomp = optimal_ncomp)
+
+
+
+MSE <- sum((predictions - test_data$Apps)^2) / nrow(test_data)
+
+RMSE <- sqrt(MSE)
+
+optimal_ncomp
+
+RMSE
+

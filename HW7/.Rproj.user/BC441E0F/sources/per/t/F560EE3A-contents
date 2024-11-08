@@ -1,0 +1,384 @@
+---
+title: "HW7"
+author: "Trey Davidson"
+date: "2024-10-22"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Question 6 
+
+
+## A.) 
+
+```{r}
+
+library(ISLR2)
+
+
+set.seed(10)  
+train_index <- sample(length(Wage$year), length(Wage$year) / 2)
+
+train_data <- Wage[train_index, ]
+test_data <- Wage[-train_index, ]
+
+
+RSS <- numeric(10)
+for (d in 1:10)
+  
+{
+  
+  
+  model <- lm(wage ~ poly(age, degree = d), data = train_data)
+  
+  
+  predictions <- predict(model, newdata = test_data)
+  
+  
+  RSS[d] <- sum(( test_data$wage - predictions) ^ 2)
+
+}
+
+
+
+model <- lm(wage ~ poly(age, degree = which.min(RSS)), data = train_data)
+
+summary(model)
+
+```
+
+THis model is overal statsticl sifinfict but certain degrees are not ioke 5th 6th 7th and 8th. 
+
+
+## B.) 
+
+```{r}
+library(ISLR2)
+
+
+set.seed(10)  
+train_index <- sample(length(Wage$year), length(Wage$year) / 2)
+
+train_data <- Wage[train_index, ]
+test_data <- Wage[-train_index, ]
+
+RSS <- numeric(10)
+for (num_cuts in 1:10)
+{
+  age_cut <- cut(Wage$age, breaks = num_cuts  + 1)
+  
+  model <- glm(wage ~ age_cut, data = Wage)
+  
+  predictions <- suppressWarnings(predict(model, newdata = test_data))
+  
+  RSS[num_cuts] <-  sum((test_data$wage - predictions) ^ 2)
+}
+
+
+
+optimal_cuts <- which.min(RSS)
+
+
+model <- glm(wage ~ cut(age, breaks = optimal_cuts + 1), data = train_data)
+
+
+test_data$age_cut <- cut(test_data$age, breaks = optimal_cuts + 1, include.lowest = TRUE)
+predictions <- predict(model, newdata = test_data)
+
+
+plot(test_data$age, test_data$wage, 
+     xlab = "Age", 
+     ylab = "Wage", 
+     main = "Wage vs. Age")
+
+
+lines(test_data$age[order(test_data$age)], 
+      predictions[order(test_data$age)])
+
+```
+
+The optimal cuts lokked to be 2
+### Question 9
+
+## A.)
+
+``` {r }
+library(ISLR2)
+
+
+poly_model <- lm(nox ~ poly(dis, 3), data = Boston)
+
+
+plot(Boston$dis, Boston$nox)
+
+
+summary(poly_model)
+
+
+# Creates a line that goes over data set
+dis_seq <- seq(0, 13, length.out = 100 * 13)
+
+predicted_nox <- predict(poly_model, newdata = data.frame(dis = dis_seq))
+
+
+lines(dis_seq, predicted_nox)
+```
+
+
+## B.)
+
+```{r}
+
+library(ISLR2)
+
+
+
+
+
+plot(Boston$dis, Boston$nox)
+
+
+RSS <- vector("numeric", length = 10)
+
+
+for (d in 1:10)
+{
+  poly_model <- lm(nox ~ poly(dis, d), data = Boston)
+  
+  dis_seq <- seq(0, 13, length.out = 100 * 13)
+  
+  predicted_nox <- predict(poly_model, newdata = data.frame(dis = dis_seq))
+  
+  RSS[d] = sum(poly_model$residuals^2)
+  
+  lines(dis_seq, predicted_nox)
+  
+
+}
+
+RSS
+```
+
+## C.)
+
+
+```{r}
+
+### Code creates 30 combinations of train and test data, and then creates a model using 
+library(ISLR2)
+
+
+data <- Boston
+
+sample <- numeric(30)
+
+for (n in 1:30)
+{
+  set.seed(n)
+  
+  
+  train_index <- sample(nrow(Boston), nrow(Boston) / 2, replace = FALSE)
+  train_data <- data[train_index, ]
+  vald_data <- data[-train_index, ]
+  
+  RSS <- numeric(10)
+  for (d in 1:10) {
+    
+    poly_model <- lm(nox ~ poly(dis, d), data = train_data)
+    
+    
+    predicted_nox <- predict(poly_model, newdata = vald_data)
+    
+    
+    RSS[d] <- sum((vald_data$nox - predicted_nox)^2)
+  }
+  
+  sample[n] <- which.min(RSS)
+
+}
+
+hist(sample, breaks = 10, col="lightblue")
+
+sample
+```
+
+The histogram clearly shows that 3 degrees with being the best in 33% of validation sets. The next best 10 makes up 16%, which is a signfinct dropoff
+
+
+## D.) 
+
+```{r}
+
+library(ISLR2)
+library(splines)
+
+data(Boston)
+
+
+spline <- bs(Boston$dis, degree = 3, knots = c(3, 6))
+
+
+model <- lm(Boston$nox ~ spline)
+
+
+predicted_y <- predict(model)
+
+
+plot(Boston$dis, Boston$nox, col = "lightgrey", pch = 19)
+
+x <- sort(Boston$dis)
+y <- predicted_y[order(Boston$dis)]
+lines(x, y, col = "blue")
+
+
+RSS <- sum(model$residuals^2)
+
+
+RSS
+```
+
+I choose the places here it looks like the line was changing. I also adjusted degree rather then df because I kept getting the same lines, and I understand that df is affected by the degree polynomial 
+
+## E.)
+
+```{r}
+library(ISLR2)
+library(splines)
+
+data(Boston)
+
+
+
+
+RSS <- numeric(10)
+
+for (d in 1:10)
+  
+{
+  spline <- bs(Boston$dis, degree = d, knots = c(3, 6))
+  
+  
+  model <- lm(Boston$nox ~ spline)
+  
+  
+  predicted_y <- predict(model)
+  
+  
+  plot(Boston$dis, Boston$nox, col = "lightgrey", pch = 19)
+  
+  x <- sort(Boston$dis)
+  y <- predicted_y[order(Boston$dis)]
+  lines(x, y, col = "blue")
+  
+  
+  RSS[d] <- sum(model$residuals^2)
+  
+
+}
+
+RSS
+```
+This results in all of them being the exact same RSS, which makes sense if the
+
+```{r}
+
+library(ISLR2)
+library(splines)
+
+data(Boston)
+
+
+set.seed(1)
+
+
+train_indices <- sample(1:nrow(Boston), size = 0.5 * nrow(Boston))
+train_data <- Boston[train_indices, ]
+test_data <- Boston[-train_indices, ]
+
+RSS <- numeric(10)
+
+for (d in 1:10) {
+  
+ 
+  spline <- bs(train_data$dis, degree = d, knots = c(3, 6))
+  
+
+  model <- lm(train_data$nox ~ spline)
+  
+
+  test_spline <- bs(test_data$dis, degree = d, knots = c(3, 6))
+  predicted_y <- predict(model, newdata = data.frame(spline = test_spline))
+  
+
+  RSS[d] <- sum((predicted_y - test_data$nox)^2)
+  
+
+  
+}
+
+RSS
+
+
+```
+
+It looks like the 3 degree or df 4 did the best. 
+
+
+### 10.
+
+
+```{r}
+
+
+
+
+
+
+college_data <- College
+library(MASS) 
+library(caret) 
+
+
+set.seed(10) 
+train_index <- createDataPartition(college_data$Outstate, p = 0.8, list = FALSE)
+train_set <- college_data[train_index, ]
+test_set <- college_data[-train_index, ]
+
+
+initial_model <- lm(Outstate ~ 1, data = train_set) 
+full_model <- lm(Outstate ~ ., data = train_set)
+
+stepwise_model <- stepAIC(initial_model, scope = list(lower = initial_model, upper = full_model), direction = "forward")
+
+summary(stepwise_model)
+
+
+library(mgcv)
+
+
+gam_model <- gam(Outstate ~ s(Terminal) + s(Accept) + s(Room.Board) + s(S.F.Ratio) + s(Apps) + s(Expend) + s(Personal) + s(Top10perc) + Private + s(PhD), data = train_set)
+
+test_predictions <- predict(gam_model, newdata = test_set)
+
+
+r_squared <- 1 - sum((test_set$Outstate - test_predictions)^2) / sum((test_set$Outstate - mean(test_set$Outstate))^2)
+
+r_squared
+
+summary(gam_model)
+
+```
+
+
+The model has a high R_sqared which is good. 
+
+ALl varibles seem to be non linnear except Terminal, Room.Board, and Top10percent. 
+
+
+
+

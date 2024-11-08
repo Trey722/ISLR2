@@ -1,0 +1,70 @@
+library(ISLR2)
+library(caret)
+library(e1071)
+
+
+
+getTrainTestIndex <- function(amount) 
+{
+  total_numbers <- amount / 2
+  
+  half <- amount/2
+  
+  all_indices <- sample(1:amount, size = amount, replace = FALSE)
+  
+  train_index <- all_indices[1:half]
+  test_index <- all_indices[half:amount]
+  
+  return(list(train_index = train_index, test_index = test_index))
+}
+
+###################
+
+
+# A.) 
+carData <- Auto
+
+n <- nrow(carData)
+
+carData$MileageDistance <- ifelse(carData$mpg > median(carData$mpg), 1, 0)
+
+
+indexes <- getTrainTestIndex(n)
+
+traindata <- carData[indexes$train_index, ]
+testdata <- carData[indexes$test_index, ]
+
+traindata$MileageDistance <- as.factor(traindata$MileageDistance)
+testdata$MileageDistance <- as.factor(testdata$MileageDistance)
+
+
+# B.)
+lin_costs <- rep(0.0, 10)
+
+for (c in 1:10)
+{
+  m1 <- svm(MileageDistance ~ . - mpg, kernel = "linear", cost = c, scale = FALSE, data = traindata)
+  
+  
+  predictions <- predict(m1, newdata = testdata)
+  
+  confusion_matrix <- confusionMatrix(predictions, testdata$MileageDistance)
+  
+  accuracy <- confusion_matrix$overall['Accuracy']
+  lin_costs[c] <- accuracy
+
+}
+
+which.min(costs)
+
+# The model with a cost of 0 minmises cost. 
+
+# C.) 
+
+
+
+
+
+
+
+

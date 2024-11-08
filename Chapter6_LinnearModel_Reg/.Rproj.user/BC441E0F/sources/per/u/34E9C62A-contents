@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r linnear Regression }
+library(ISLR2)
+
+train_percent <- 0.7
+
+
+data <- College
+
+set.seed(10)
+
+n <- nrow(data)
+
+train_size <- floor(train_percent * n)
+
+train_indices <- sample(seq_len(n), size = train_size)
+
+train_data <- College[train_indices, ]
+test_data <- College[-train_indices, ]
+
+lr_model <- lm(Apps ~ ., data=train_data)
+
+predictions <- predict(lr_model, newdata = test_data)
+
+MSE <- sum((predictions-test_data$Apps)^2) / nrow(test_data)
+
+RMSE <- sqrt(MSE)
+
+cat("RMSE linnear regression is", RMSE)
+```
+
+
+``` {r Ridge Regression}
+
+
+
+```
+
+
+

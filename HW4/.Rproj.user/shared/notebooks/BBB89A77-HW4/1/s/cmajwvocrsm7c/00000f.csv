@@ -1,0 +1,8 @@
+"0",""
+"0","library(ISLR2)"
+"0",""
+"0","attach(Weekly)"
+"0",""
+"0","boxplot(Today ~ Direction, "
+"0","        xlab = ""Direction"", ylab = ""Today"", "
+"0","        main = ""Boxplot of Today by Direction"")"

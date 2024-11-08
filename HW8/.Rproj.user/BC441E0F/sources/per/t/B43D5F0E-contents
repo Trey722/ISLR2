@@ -1,0 +1,215 @@
+---
+title: "HW 8"
+author: "Trey Davidson"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Question 4
+
+#### A.)
+
+![Alt text](/Users/treydavidson/Desktop/Mizzou/FS%202024/STATS%204510/HW/HW8/IMG_0050.jpg)
+
+#### B.)
+
+![Alt text](/Users/treydavidson/Desktop/Mizzou/FS%202024/STATS%204510/HW/HW8/IMG_0051.jpg)
+
+# Question 5
+
+```{r }
+
+data <- c(0.1, 0.15, 0.2, 0.2, 0.55, 0.6, 0.6, 0.65, 0.7, 0.75)
+
+# The mean
+mean(data) 
+
+# Median
+median(data)
+
+
+# Since the mean is < 0.5. The average would dicate green, but if you use siple majority you would pick red as the median is greater then 0.5
+```
+
+# Question 8
+
+```{r }
+library(ISLR2)
+library(rpart)
+library(rpart.plot)
+library(caret)
+library(randomForest)
+library(dbarts)
+set.seed(10)
+
+# Function gets train and test data index's
+getTrainTestIndex <- function(amount) 
+  {
+  total_numbers <- amount / 2
+
+  half <- amount/2
+  
+  all_indices <- sample(1:amount, size = amount, replace = FALSE)
+  
+  train_index <- all_indices[1:half]
+  test_index <- all_indices[half:amount]
+  
+  return(list(train_index = train_index, test_index = test_index))
+}
+
+getMSE <- function(actual, predictions) 
+{
+  # This part throws an error
+  if (length(actual) != length(predictions)) {
+    stop("Length of actual and predictions must be the same.")
+  }
+  
+  mse <- mean((actual - predictions)^2)
+  
+  return(mse)
+}
+
+# A. 
+
+data <- Carseats
+n <- nrow(data)
+
+
+indexes <- getTrainTestIndex(n)
+
+traindata <- data[indexes$train_index, ]
+testdata <- data[indexes$test_index, ]
+
+
+# B.) 
+
+m1 <- rpart(Sales ~ ., data <- traindata)
+
+rpart.plot(m1, roundint=FALSE)
+
+# The plot shows that shelf location is the best predictor of sales, which makes sense when thinking about how people shop.
+
+p1 <- predict(m1, data <- testdata)
+
+m1MSE <- getMSE(data$Sales, p1)
+
+m1MSE
+
+
+# C.) 
+
+# 5 Fold Cross validation is used 
+ctrl <- trainControl(method = "cv", number = 5) 
+
+
+m2 <- train(Sales ~ ., data <- traindata, method = "rpart", trControl = ctrl)
+
+p2 <- predict(m2, data <- testdata)
+
+m2MSE <- getMSE(testdata$Sales, p2)
+
+m2MSE
+
+
+# Cross vlaidation tree test error is higher then regualr, which seems quite weird to me. 
+
+
+# D.) 
+
+ctrl <- trainControl(method = "cv", number = 5)
+
+
+m3 <- train(Sales ~ ., data = traindata, method = "rf", trControl = ctrl, importance = TRUE)
+
+p3 <- predict(m3, newdata <- testdata)
+
+
+m3MSE <- getMSE(testdata$Sales, p3)
+
+m3MSE
+
+# m3MSE error = 2.974038
+
+
+importance_var <- importance(m3$finalModel)
+
+
+importance_var
+
+# E.) 
+
+ctrl <- trainControl(method = "cv", number = 5)
+
+
+m4 <- train(Sales ~ ., data = traindata, method = "rf",  trControl = ctrl, importance = TRUE)
+
+
+p4 <- predict(m4, newdata = testdata)
+
+
+
+
+m4MSE <- getMSE(testdata$Sales, p4)
+
+m4MSE
+
+important_var_m4 <- importance(m4$finalModel)
+
+important_var_m4
+
+# Random Forest had the lowest MSE so far 
+
+
+# F.) 
+
+# Bart Model
+
+m5 <- bart2(Sales ~ ., data = traindata, n.samples = 50, keepTrees = TRUE)
+
+
+p5 <- predict(m5, newdata = testdata)
+
+
+m5MSE <- mean((testdata$Sales - p5)^2)
+
+m5MSE
+
+# Error is higest in BART model
+
+
+```
+
+# Question 11 
+
+
+``` {r }
+
+
+library(gbm)
+
+
+# A.)
+data <- Caravan
+data$Purchase <- as.numeric(data$Purchase) - 1
+traindata <- data[1:1000, ]
+testdata <- data[1000:2000, ]
+
+
+#B.)
+
+
+m1 <- gbm(Purchase ~ ., 
+           data = traindata, 
+           shrinkage = 0.01, 
+           n.trees = 1000, 
+           verbose = FALSE)
+
+importance <- summary(m1)
+
+
+importance
+
+# MSKC clealry seems to be important. The rest seems to drop off. 
+
+
+```

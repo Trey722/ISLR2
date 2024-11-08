@@ -1,0 +1,292 @@
+---
+title: "HW5"
+author: "Trey Davidson"
+date: "2024-09-27"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Question 1
+
+A.) The probability of us picking the jth one is going to be 1 - (probability of us not picking jth one). 
+Since there is n - 1 non jth terms. Then the probability of us not picking the jth terms is (n - 1) / n.
+
+We then plug that into 1 - (probability of us not picking jth one).  to get 1 - [(n - 1) / n]
+]
+
+B.) The first and second random ones are indpendent meaning that one sample could be repated therfore there is no differnce in probability compared to A just like how flipping a coin. 1 - [(n - 1) / n]
+
+C.) The odds of not picking one one time is 1 - 1/n. If we do this n number of times and each are indpednent meaning the results of 1 does not effect the results of the sample we pick the next time then we just take it to the nth power leaving us with (1- 1/n)^n 
+
+
+
+``` {r }
+
+# D 
+
+nth_chance <- function(x)
+{
+  return(1-(1-1/x)^x)
+}
+
+
+nth_chance(5)
+
+#E
+nth_chance(100)
+
+#F
+nth_chance(10000)
+
+#G
+x <- (1:100)
+
+plot(x, nth_chance(x))
+
+store <- rep(NA, 10000)
+for (i in 1:10000)
+{
+  store[i] <- sum(sample(1:100, rep=TRUE) == 4) > 0 
+  
+}
+
+mean(store)
+
+#I am consistnitly seeing aprox 0.63 which is roughly what I expected 
+
+
+```
+
+
+### Questiion 5 
+
+``` {r }
+library(ISLR2)
+
+log_reg <-  glm(default ~ income+balance, data=Default, family = "binomial")
+
+
+
+
+
+train_proportion <- 0.5  
+
+vald_error <- numeric(3)
+
+for (i in 1:3) {
+# Generate a random sample of indexes
+train_index <- sample(1:nrow(Default), size = train_proportion * nrow(Default))
+
+# Create training and testing datasets
+train <- Default[train_index, ]
+test <- Default[-train_index, ]
+
+train_log_reg <- glm(default ~ income + balance, data = train, family = "binomial")
+
+test$predicted_probs <- predict(log_reg, newdata = test, type = "response")
+
+test$predicted_class <- ifelse(test$predicted_probs > 0.5, "Yes", "No")
+
+confusion_matrix <- table(test$default, test$predicted_class)
+
+misclassified <- sum(confusion_matrix) - sum(diag(confusion_matrix))
+validation_error <- misclassified / sum(confusion_matrix)
+
+vald_error[i] <- validation_error
+
+}
+
+mean(vald_error)
+
+# The test error looks to be quite low. 
+
+
+model_with_student <- glm(default ~ income + balance + student, data = train, family = "binomial")
+
+
+for (i in 1:10) {
+# Generate a random sample of indexes
+train_index <- sample(1:nrow(Default), size = train_proportion * nrow(Default))
+
+# Create training and testing datasets
+train <- Default[train_index, ]
+test <- Default[-train_index, ]
+
+train_log_reg <- glm(default ~ income + balance + student, data = train, family = "binomial")
+
+test$predicted_probs <- predict(log_reg, newdata = test, type = "response")
+
+test$predicted_class <- ifelse(test$predicted_probs > 0.5, "Yes", "No")
+
+confusion_matrix <- table(test$default, test$predicted_class)
+
+misclassified <- sum(confusion_matrix) - sum(diag(confusion_matrix))
+validation_error <- misclassified / sum(confusion_matrix)
+
+vald_error[i] <- validation_error
+
+}
+
+mean(vald_error)
+
+# Adding student doesn't seem to change error by a meaninful amount  
+```
+
+
+### Question 7
+
+``` {r }
+
+
+# A.
+log_model <- glm(Direction ~ Lag1 + Lag2, data=Weekly, family = "binomial")
+
+summary(log_model)
+
+# B.
+log_model_minus_one <- glm(Direction ~ Lag1 + Lag2, data= Weekly[-1, ], family = "binomial")
+
+
+#C.
+first_obs <- data.frame(Lag1 = Weekly$Lag1[1], Lag2 = Weekly$Lag2[1])
+
+
+
+predicted_prob <- predict(log_model_minus_one, newdata = first_obs, type = "response")
+
+predicted_class <- ifelse(predicted_prob > 0.5, "Up", "Down")
+
+actual_class <- Weekly$Direction[1]
+
+predicted_class
+
+ Weekly$Direction[1]
+ 
+ # My moddel was correcrt
+ errors <- numeric(nrow(Weekly))
+ i <- -1
+# D
+for (i in 1:nrow(Weekly)) {
+  # i. Fit a model using all but the ith observation
+  model_loocv <- glm(Direction ~ Lag1 + Lag2, data = Weekly[-i, ], family = "binomial")
+  
+  # ii. Compute the posterior probability for the ith observation
+  new_data <- data.frame(Lag1 = Weekly$Lag1[i], Lag2 = Weekly$Lag2[i])
+  predicted_prob <- predict(model_loocv, newdata = new_data, type = "response")
+  
+  # iii. Predict whether the market moves up
+  predicted_class <- ifelse(predicted_prob > 0.5, "Up", "Down")
+  
+  # iv. Determine if an error was made
+  actual_class <- Weekly$Direction[i]
+  errors[i] <- ifelse(predicted_class == actual_class, 0, 1)  # 0 if correct, 1 if error
+}
+
+# E Calculate LOOCV error estimate
+loocv_error <- mean(errors)
+print(paste("Test Error:", round(loocv_error, 4)))
+
+# 0.45 error rate implying that our model is slighlty better then a coin toss 
+```
+
+
+
+
+
+
+### Question 9 
+
+
+``` {r}
+
+# A.)
+mu_hat <- mean(Boston$medv)
+print(mu_hat)
+
+# B.)
+
+# Estimate the standard deviation
+sd_medv <- sd(Boston$medv)
+
+# Estimate the standard error
+n <- nrow(Boston)
+se_mu_hat <- sd_medv / sqrt(n)
+print(se_mu_hat)
+
+#C.)
+
+# Bootstrap function to calculate mean
+set.seed(123)  # For reproducibility
+B <- 1000  # Number of bootstrap samples
+bootstrap_means <- numeric(B)
+
+for (i in 1:B) {
+  bootstrap_sample <- sample(Boston$medv, n, replace = TRUE)
+  bootstrap_means[i] <- mean(bootstrap_sample)
+}
+
+# Estimate the standard error from bootstrap
+se_bootstrap <- sd(bootstrap_means)
+print(se_bootstrap)
+
+#D.)
+
+# Confidence interval using bootstrap
+conf_interval <- c(mu_hat - 2 * se_bootstrap, mu_hat + 2 * se_bootstrap)
+print(conf_interval)
+
+# Compare with t-test
+t_test <- t.test(Boston$medv)
+print(t_test$conf.int)
+
+#E.)
+
+# Estimate for the median
+mu_med <- median(Boston$medv)
+print(mu_med)
+
+
+#F.)
+
+# Bootstrap for median
+bootstrap_medians <- numeric(B)
+
+for (i in 1:B) {
+  bootstrap_sample <- sample(Boston$medv, n, replace = TRUE)
+  bootstrap_medians[i] <- median(bootstrap_sample)
+}
+
+# Estimate the standard error from bootstrap
+se_bootstrap_median <- sd(bootstrap_medians)
+print(se_bootstrap_median)
+
+
+#G.)
+
+# Estimate for the 10th percentile
+mu_0.1 <- quantile(Boston$medv, 0.1)
+print(mu_0.1)
+
+#H.)
+
+# Bootstrap for the 10th percentile
+bootstrap_0.1 <- numeric(B)
+
+for (i in 1:B) {
+  bootstrap_sample <- sample(Boston$medv, n, replace = TRUE)
+  bootstrap_0.1[i] <- quantile(bootstrap_sample, 0.1)
+}
+
+# Estimate the standard error from bootstrap
+se_bootstrap_0.1 <- sd(bootstrap_0.1)
+print(se_bootstrap_0.1)
+
+
+
+
+```

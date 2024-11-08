@@ -1,0 +1,310 @@
+---
+title: "HW6"
+author: "Trey Davidson"
+date: "2024-10-03"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Question 1
+
+A.)
+
+Subset selection will most likely have smallest RSS as it looks at every possible model. 
+
+B.) 
+
+This can not be guartneed as Subset collection has the possibility of overfitting to training. 
+
+
+C. 
+
+i.) True because once a predicter is added in the foward model, then it will never be removed. 
+
+ii.) True because one is removed. 
+
+iii).False backward and foward selection do not guartnee the samle predictators. 
+
+iv.) False again backward and foward selection do not guartnee the same results. 
+
+v.) False subset looks at the best model for k predictors meaning that a preidctor could be useful for k, but not for k + 1. Unlike foward and backward, which just adds or removes the best one meaning if you are in k model, then you will be in k + 1 model. 
+
+
+### Question 2
+A.)
+Lasso is less flexaible meaning bias is higher, and variance is lower. Meaning that if the increase in bias is less then the decrease in variance the model will have more predictave accuracy. 
+
+Answer is iii
+
+B.) 
+
+Just like lasso ridge decrease flexability so we would epect iii for the same reasons 
+
+Answer is iii
+
+C.) 
+
+Non linnear methods are more flexabile therefore they will increase accuracy when the abs(increase in varinace) is less then the abs(decrease in bias). 
+
+
+### Linnear Regression 
+```{r Linnear Regression }
+
+library(ISLR2)
+
+train_percent <- 0.7
+
+
+data <- College
+
+set.seed(10)
+
+n <- nrow(data)
+
+train_size <- floor(train_percent * n)
+
+train_indices <- sample(seq_len(n), size = train_size)
+
+train_data <- College[train_indices, ]
+test_data <- College[-train_indices, ]
+
+lr_model <- lm(Apps ~ ., data=train_data)
+
+predictions <- predict(lr_model, newdata = test_data)
+
+MSE <- sum((predictions-test_data$Apps)^2) / nrow(test_data)
+
+RMSE <- sqrt(MSE)
+
+# Linnear Regression RMSE
+RMSE
+
+```
+
+
+### Ridge
+``` {r Ridge Regression }
+library(ISLR2)
+library(glmnet)
+
+
+train_percent <- 0.7
+
+
+data <- College
+
+set.seed(10)
+
+n <- nrow(data)
+
+train_size <- floor(train_percent * n)
+
+train_indices <- sample(seq_len(n), size = train_size)
+
+train_data <- College[train_indices, ]
+test_data <- College[-train_indices, ]
+
+
+x=model.matrix(Apps~. -1, data=train_data)
+y=train_data$Apps
+
+fit.ridge=glmnet(x, y, alpha=0)
+plot(fit.ridge, xvar="lambda", label = TRUE)
+cv.ridge=cv.glmnet(x, y, alpha=0)
+
+#Cross Validation
+plot(cv.ridge)
+
+
+# This picks the best lambda
+best_lambda <- cv.ridge$lambda.min
+
+
+
+ridge_model = glmnet(x, y, alpha = 0, lambda = best_lambda)
+
+
+
+x_test = model.matrix(Apps ~ . - 1, data = test_data)
+
+predictions = predict(fit.ridge, s = best_lambda, newx = x_test)
+
+MSE <- sum((predictions - test_data$Apps)^2) / nrow(test_data)
+
+RMSE <- sqrt(MSE)
+
+
+# Ridge RMSE
+RMSE
+
+```
+
+
+### Lasso 
+
+```{r lasso regression}
+
+
+library(ISLR2)
+library(glmnet)
+
+# Set parameters
+train_percent <- 0.7
+data <- College
+set.seed(10)
+
+# Split data
+n <- nrow(data)
+train_size <- floor(train_percent * n)
+train_indices <- sample(seq_len(n), size = train_size)
+
+train_data <- College[train_indices, ]
+test_data <- College[-train_indices, ]
+
+x <- model.matrix(Apps ~ . - 1, data = train_data)
+y <- train_data$Apps
+
+# Fit Lasso regression
+fit.lasso <- glmnet(x, y, alpha = 1)  # Set alpha = 1 for Lasso
+plot(fit.lasso, xvar = "lambda", label = TRUE)
+
+
+cv.lasso <- cv.glmnet(x, y, alpha = 1)
+plot(cv.lasso)
+
+# Get the best lambda
+best_lambda <- cv.lasso$lambda.min
+
+# Fit the Lasso model with the best lambda
+lasso_model <- glmnet(x, y, alpha = 1, lambda = best_lambda)
+
+
+x_test <- model.matrix(Apps ~ . - 1, data = test_data)
+
+# Make predictions
+predictions <- predict(lasso_model, s = best_lambda, newx = x_test)
+
+# Calculate MSE and RMSE
+MSE <- sum((predictions - test_data$Apps)^2) / nrow(test_data)
+RMSE <- sqrt(MSE)
+
+
+
+# Get coefficients
+coefficients <- coef(lasso_model)
+
+
+# Prints number of non zero coeeficents
+
+sum(coefficients != 0)
+
+RMSE
+
+
+```
+
+
+### PCR
+
+``` {r PCR}
+
+library(ISLR2)
+library(pls)
+
+
+set.seed(10)
+
+
+train_fraction <- 0.5
+train_indices <- sample(seq_len(nrow(College)), size = floor(train_fraction * nrow(College)))
+train_data <- College[train_indices, ]
+test_data <- College[-train_indices, ]
+
+
+pcr_model <- pcr(Apps ~ ., data = train_data, validation = "CV")
+
+
+
+
+
+
+plot(pcr_model, plottype = "validation")
+
+
+
+# Finds optimal by minimizeng validation error
+optimal_ncomp <- which.min(pcr_model$validation$PRESS)
+
+
+
+predictions <- predict(pcr_model, newdata = test_data, ncomp = optimal_ncomp)
+
+
+MSE <- sum((predictions - test_data$Apps)^2) / nrow(test_data)
+
+RMSE <- sqrt(MSE)
+
+RMSE
+
+
+# Number of Components
+optimal_ncomp
+
+```
+
+
+
+### PLS 
+``` {r PLS}
+
+
+library(ISLR2)
+library(pls)
+
+
+set.seed(10)
+
+
+train_fraction <- 0.7
+train_indices <- sample(seq_len(nrow(College)), size = floor(train_fraction * nrow(College)))
+train_data <- College[train_indices, ]
+test_data <- College[-train_indices, ]
+
+
+pls_model <- plsr(Apps ~ ., data = train_data, scale=TRUE, validation = "CV")
+
+
+plot(pls_model, plottype = "validation")
+
+
+optimal_ncomp <- which.min(pls_model$validation$PRESS)
+
+
+predictions <- predict(pls_model, newdata = test_data, ncomp = optimal_ncomp)
+
+
+
+MSE <- sum((predictions - test_data$Apps)^2) / nrow(test_data)
+
+RMSE <- sqrt(MSE)
+
+
+# RMSE on test 
+RMSE
+
+# Number of Components
+optimal_ncomp
+
+
+
+```
+
+
+The Ridge Selection had the lowest Root Mean Sqaure Error on the test data. I did a 70% Train and 30%  Test Split. I did them all on seed 10, which was a randomly picked by me. I tried other ones and some drastically lowered the RMSE of certain models, but on this seed all of them finished +- 100 of each other in terms of RMSE. 
+
+For me, if I did this code right, this shows how good of a regression linear is because its RMSE wasn't that much worse then the best model and it is significant easier to implement. 

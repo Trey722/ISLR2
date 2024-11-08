@@ -1,0 +1,33 @@
+{
+    "id": "A600824B",
+    "path": "~/Desktop/Mizzou/FS 2024/STATS 4510/HW/HW9/HW9.Rmd",
+    "project_path": "HW9.Rmd",
+    "type": "r_markdown",
+    "hash": "2718451503",
+    "contents": "",
+    "dirty": false,
+    "created": 1731038017318.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "tempName": "Untitled2",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "85,0",
+        "scrollLine": "142",
+        "rmdVisualMode": "false",
+        "rmdVisualWrapConfigured": "true",
+        "docOutlineVisible": "1",
+        "rmdVisualCollapsedChunks": "",
+        "rmdVisualModeLocation": "234:255",
+        "last_setup_crc32": "1f2ae88a45622977"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1731042690,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1731042690929,
+    "read_only": false,
+    "read_only_alternatives": []
+}
